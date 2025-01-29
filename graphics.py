@@ -30,6 +30,7 @@ class Window():
         self.root.bind('<Left>',self.leftKey)
         self.root.bind('d', self.rightkey)
         self.root.bind('<Right>',self.rightkey)
+        self.paused = False
 
         self.map = None
 
@@ -47,11 +48,6 @@ class Window():
         self.root.update_idletasks()
         self.root.update()
         
-    def wait_for_close(self):
-        self.running = True
-        while(self.running):
-            self.redraw()
-
     def close(self):
         self.running = False
 
@@ -99,9 +95,11 @@ class Map():
 
     def game_start(self):
         while(not self.snake.crashed):
-            self.animate()
-            self.snake.move()
+            if not self.win.paused:
+                self.animate()
+                self.snake.move()
             self.draw(self.win.canvas)
+
         self.win.running = False
 
 
@@ -112,10 +110,6 @@ class Snake():
         self.win = win
         self.map = None
         self.directiontupel = (0,1)
-
-    def animate(self):
-        self.win.redraw()
-        time.sleep(0.1)
     
     def set_map(self,map):
         self.map = map
