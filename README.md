@@ -1,2 +1,2 @@
 # snake_game
-Snake game in Pyhton using Tkinter
+Snake game in Python using Tkinter
