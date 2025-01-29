@@ -3,6 +3,12 @@ import time
 import random
 from enum import Enum
 
+class FieldType(Enum):
+    EMPTY = 0
+    WALL = 1
+    FOOD = 2
+    SNAKE = 3
+
 class Direction(Enum):
     LEFT = 1
     RIGHT = 2
@@ -21,7 +27,10 @@ class Window():
         self.canvas.pack(fill=BOTH, expand=1)
         self.running = False
         self.root.bind('a', self.leftKey)
+        self.root.bind('<Left>',self.leftKey)
         self.root.bind('d', self.rightkey)
+        self.root.bind('<Right>',self.rightkey)
+
         self.map = None
 
     def set_map(self,map):
@@ -52,48 +61,37 @@ class Map():
         self.snake = snake
         self.width = win.width//self.cellsize
         self.height = win.height//self.cellsize
-        self.fields = [[0 for _ in range(self.width)] for _ in range(self.height)]
+        self.fields = [[FieldType.EMPTY for _ in range(self.width)] for _ in range(self.height)]
         self.init_field()
         self.win = win
-        self.draw_snake()
-        self.nextfood = self.set_next_food()
-        self.draw_food()
-
-    def draw_snake(self):
-        for x,y in self.snake.snake_draw:
-            self.fields[x][y] = 1
-            self.win.canvas.create_rectangle(x*self.cellsize,y*self.cellsize,(x+1)*self.cellsize,(y+1)*self.cellsize,outline= "green",fill="green")
-        for x,y in self.snake.snake_undraw:
-            self.fields[x][y] = 0
-            self.win.canvas.create_rectangle(x*self.cellsize,y*self.cellsize,(x+1)*self.cellsize,(y+1)*self.cellsize,outline="white",fill="white")
-            self.snake.snake_undraw = []
-
-    def draw_food(self):
-        self.win.canvas.create_rectangle(self.nextfood[0]*self.cellsize,self.nextfood[1]*self.cellsize,(self.nextfood[0]+1)*self.cellsize,(self.nextfood[1]+1)*self.cellsize,fill="red",stipple="gray25")
+        self.set_next_food()
+        self.draw(win.canvas)
 
     def init_field(self):
-        self.fields[0] = [1 for _ in range(self.width)]
-        self.fields[-1] = [1 for _ in range(self.width)]
+        self.fields[0] = [FieldType.WALL for _ in range(self.width)]
+        self.fields[-1] = [FieldType.WALL for _ in range(self.width)]
         for j in range(self.height):
-            self.fields[j][0] = 1
-            self.fields[j][-1] = 1
+            self.fields[j][0] = FieldType.WALL
+            self.fields[j][-1] = FieldType.WALL
 
     def set_next_food(self):
         x,y = (random.randint(1,self.width-1),random.randint(1,self.height-1))
-        while (self.fields[x][y]):
-            x,y = (random.randint(1,self.width-1),random.randint(1,self.height-1))
-        self.fields[x][y] = 2
-        return (x,y)
-
+        while (self.fields[x][y] != FieldType.EMPTY):
+            x,y = random.randint(1,self.width-1),random.randint(1,self.height-1)
+        self.fields[x][y] = FieldType.FOOD
+        print(x,y)
 
     def draw(self,canvas:Canvas,color="black"):
         for i in range(self.width):
             for j in range(self.height):
-                if self.fields[j][i] == 1:
-                    canvas.create_rectangle(i*self.cellsize,j*self.cellsize,(i+1)*self.cellsize,(j+1)*self.cellsize,fill=color)
-                elif self.fields[j][i] == 2:
-                    canvas.create_rectangle(self.nextfood[0]*self.cellsize,self.nextfood[1]*self.cellsize,(self.nextfood[0]+1)*self.cellsize,(self.nextfood[1]+1)*self.cellsize,fill="red",stipple="gray25")
-
+                if self.fields[j][i] == FieldType.WALL:
+                    canvas.create_rectangle(i*self.cellsize,j*self.cellsize,(i+1)*self.cellsize,(j+1)*self.cellsize,fill="black")
+                elif self.fields[j][i] == FieldType.FOOD:
+                    canvas.create_rectangle(i*self.cellsize,j*self.cellsize,(i+1)*self.cellsize,(j+1)*self.cellsize,fill="red",stipple="gray25")
+                elif self.fields[j][i] == FieldType.SNAKE:
+                    canvas.create_rectangle(i*self.cellsize,j*self.cellsize,(i+1)*self.cellsize,(j+1)*self.cellsize,outline= "green",fill="green")
+                elif self.fields[j][i] == FieldType.EMPTY:
+                    canvas.create_rectangle(i*self.cellsize,j*self.cellsize,(i+1)*self.cellsize,(j+1)*self.cellsize,outline="white",fill="white")
 
     def animate(self):
         self.win.redraw()
@@ -103,15 +101,13 @@ class Map():
         while(not self.snake.crashed):
             self.animate()
             self.snake.move()
-            self.draw_snake()
+            self.draw(self.win.canvas)
         self.win.running = False
 
 
 class Snake():
     def __init__(self,startx,starty,win):
         self.snake_draw = [(startx,starty)]
-        self.snake_undraw = []
-        self.has_eaten = False
         self.crashed = False
         self.win = win
         self.map = None
@@ -126,16 +122,18 @@ class Snake():
 
     def move(self):
         nextpos = add_tupel(self.snake_draw[-1],self.directiontupel)
-        if self.map.fields[nextpos[0]][nextpos[1]] == 1:
+        if self.map.fields[nextpos[0]][nextpos[1]] == FieldType.WALL or self.map.fields[nextpos[0]][nextpos[1]] == FieldType.SNAKE:
             self.crashed = True
             print(f"Crashed at {nextpos}")
         
-            self.has_eaten = True
+        if self.map.fields[nextpos[0]][nextpos[1]] == FieldType.FOOD:
+            self.map.nextfood = self.map.set_next_food()
+        else:
+            x,y = self.snake_draw.pop(0)
+            self.map.fields[x][y] = FieldType.EMPTY
+
         self.snake_draw.append(nextpos)
-        if self.map.fields[nextpos[0]][nextpos[1]] != 2:
-            self.snake_undraw.append(self.snake_draw.pop(0))
-        self.has_eaten = False
-        self.map.set_next_food()
+        self.map.fields[nextpos[0]][nextpos[1]] = FieldType.SNAKE
 
     def changedir(self,direction):
         if direction == Direction.LEFT:

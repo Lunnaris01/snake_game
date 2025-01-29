@@ -7,8 +7,6 @@ def main():
     win = Window(cellsize*gameheight,cellsize*gamewidth)
     snake = Snake(gameheight//2,gamewidth//2,win)
     game_map = Map(win,snake,cellsize)
-    game_map.draw(win.canvas)
-    game_map.draw_snake()
     snake.set_map(game_map)
     win.set_map(game_map)
     game_map.game_start()
