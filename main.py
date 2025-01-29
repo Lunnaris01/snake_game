@@ -12,8 +12,6 @@ def main():
     game_map.game_start()
 
 
-    win.wait_for_close()
-
 
 
 

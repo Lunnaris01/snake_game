@@ -78,6 +78,7 @@ class Map():
         print(x,y)
 
     def draw(self,canvas:Canvas,color="black"):
+        canvas.delete("all")
         for i in range(self.width):
             for j in range(self.height):
                 if self.fields[j][i] == FieldType.WALL:
@@ -128,9 +129,10 @@ class Snake():
 
         self.snake_draw.append(nextpos)
         self.map.fields[nextpos[0]][nextpos[1]] = FieldType.SNAKE
+        print(self.snake_draw)
 
     def changedir(self,direction):
-        if direction == Direction.LEFT:
+        if direction == Direction.RIGHT:
             print(self.directiontupel)
             if self.directiontupel == (0,1):
                 self.directiontupel = (1,0)
@@ -140,7 +142,7 @@ class Snake():
                 self.directiontupel = (0,-1)
             elif self.directiontupel == (-1,0):
                 self.directiontupel = (0,1)
-        elif direction == Direction.RIGHT:
+        elif direction == Direction.LEFT:
             if self.directiontupel == (0,1):
                 self.directiontupel = (-1,0)
             elif self.directiontupel == (0,-1):
